@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { callGeminiApi } from "@/shared/lib/api/client";
+import { callAIApi } from "@/shared/lib/api/client";
 import { handleApiError } from "@/shared/lib/api/error-handler";
 
 export async function POST(request: NextRequest) {
@@ -264,9 +264,9 @@ ${inventionTitle}
 
 모든 물성값과 조성은 실제 실험 데이터를 기반으로 하며, 제조조건에 따라 일정 범위 내에서 변동 가능합니다.`;
 
-    console.log("[v0] Making request to Google Gemini API for comprehensive report generation");
+    console.log("[v0] Making request to AI API for comprehensive report generation");
 
-    const generatedText = await callGeminiApi({
+    const generatedText = await callAIApi({
       prompt,
       temperature: 0.7,
       topK: 40,

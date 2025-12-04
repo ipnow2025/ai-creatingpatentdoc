@@ -3,7 +3,7 @@ const API_BASE = "http://112.168.222.55:12254/api/generate";
 // 기본 모델은 환경 변수로 설정 가능, 없으면 gpt-oss:120b-128k 사용
 const DEFAULT_MODEL = process.env.API_MODEL || "gpt-oss:120b-128k";
 
-export interface GeminiRequest {
+export interface AIRequest {
   prompt: string;
   temperature?: number;
   maxOutputTokens?: number;
@@ -12,7 +12,7 @@ export interface GeminiRequest {
   model?: string; // 요청별로 모델을 지정할 수 있음
 }
 
-export async function callGeminiApi(request: GeminiRequest): Promise<string> {
+export async function callAIApi(request: AIRequest): Promise<string> {
   const model = request.model || DEFAULT_MODEL;
 
   try {
@@ -34,10 +34,10 @@ export async function callGeminiApi(request: GeminiRequest): Promise<string> {
         errorData = await response.json();
       } catch (parseError) {
         const errorText = await response.text();
-        console.error("[callGeminiApi] Failed to parse error response:", errorText.substring(0, 200));
+        console.error("[callAIApi] Failed to parse error response:", errorText.substring(0, 200));
         errorData = { message: errorText.substring(0, 200) };
       }
-      console.error("[callGeminiApi] API error:", {
+      console.error("[callAIApi] API error:", {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
@@ -51,7 +51,7 @@ export async function callGeminiApi(request: GeminiRequest): Promise<string> {
     const generatedText = data.response || data.text || data.content || data.output || data.result;
 
     if (!generatedText) {
-      console.error("[callGeminiApi] No generated text in response:", JSON.stringify(data, null, 2));
+      console.error("[callAIApi] No generated text in response:", JSON.stringify(data, null, 2));
       throw new Error("생성된 텍스트가 없습니다.");
     }
 
@@ -62,7 +62,7 @@ export async function callGeminiApi(request: GeminiRequest): Promise<string> {
       throw error;
     }
     // Wrap other errors
-    console.error("[callGeminiApi] Unexpected error:", error);
+    console.error("[callAIApi] Unexpected error:", error);
     throw error;
   }
 }

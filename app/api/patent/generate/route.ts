@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { callGeminiApi } from "@/shared/lib/api/client";
+import { callAIApi } from "@/shared/lib/api/client";
 import { handleApiError } from "@/shared/lib/api/error-handler";
 
 export const maxDuration = 300;
@@ -257,7 +257,7 @@ ${coverInfo}
 모든 내용을 자연스러운 문장으로 작성하고, 특허 전문 용어를 사용하세요.`;
     }
 
-    const responseText = await callGeminiApi({
+    const responseText = await callAIApi({
       prompt,
       temperature: 0.9,
       topK: 40,

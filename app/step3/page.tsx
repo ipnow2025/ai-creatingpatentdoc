@@ -228,9 +228,9 @@ export default function Step3Page() {
                 </Badge>
               </label>
               <div className="space-y-4">
-                {similarPatents.map((patent) => (
+                {similarPatents.map((patent, index) => (
                   <Card
-                    key={patent.patentNumber}
+                    key={patent.patentNumber ? `${patent.patentNumber}-${index}` : `patent-${index}`}
                     className={`cursor-pointer transition-all rounded-xl ${
                       selectedPatents.includes(patent.patentNumber)
                         ? "border-2 border-teal-500 bg-teal-50 shadow-lg"
@@ -352,10 +352,65 @@ export default function Step3Page() {
               </div>
 
               <div className="prose prose-lg max-w-none space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">【기술분야】</h2>
-                  <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.summary}</p>
+                {/* 기본 정보 */}
+                <div className="grid grid-cols-2 gap-6 pb-6 border-b border-gray-200">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">등록일자</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.registrationDate || "-"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">공고번호</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.publicationNumber || "-"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">공고일자</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.publicationDate || "-"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">지정분류코드</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.classificationCode || "-"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">청구항수</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.claimCount || "-"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 mb-2">존속기간만료일자</h3>
+                    <p className="text-base text-gray-900">{selectedPatentDetail.expirationDate || "-"}</p>
+                  </div>
                 </div>
+
+                {/* 영문 발명의 명칭 */}
+                {selectedPatentDetail.englishTitle && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【영문 발명의 명칭】</h2>
+                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.englishTitle}</p>
+                  </div>
+                )}
+
+                {/* 기술분야/요약 */}
+                {selectedPatentDetail.summary && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【기술분야】</h2>
+                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.summary}</p>
+                  </div>
+                )}
+
+                {/* 상세설명 */}
+                {selectedPatentDetail.abstract && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【상세설명】</h2>
+                    <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.abstract}</p>
+                  </div>
+                )}
+
+                {/* 상태 정보 */}
+                {selectedPatentDetail.status && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【법적상태】</h2>
+                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.status}</p>
+                  </div>
+                )}
               </div>
 
               <div className="pt-8 border-t-2 border-gray-300 sticky bottom-0 bg-white">

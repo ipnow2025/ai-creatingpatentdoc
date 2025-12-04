@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { callGeminiApi } from "@/shared/lib/api/client"
+import { callAIApi } from "@/shared/lib/api/client"
 import { handleApiError } from "@/shared/lib/api/error-handler"
 
 export async function POST(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
 JSON 형식으로만 응답하고, 다른 설명은 포함하지 마세요.`
 
-    const generatedText = await callGeminiApi({
+    const generatedText = await callAIApi({
       prompt,
       temperature: 0.7,
       maxOutputTokens: 8192,

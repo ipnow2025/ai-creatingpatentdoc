@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { callGeminiApi } from "@/shared/lib/api/client";
+import { callAIApi } from "@/shared/lib/api/client";
 import { handleApiError } from "@/shared/lib/api/error-handler";
 
 export async function POST(request: NextRequest) {
@@ -29,14 +29,14 @@ JSON 형식으로만 응답하고, 다른 설명은 포함하지 마세요.`;
 
     let generatedText: string;
     try {
-      generatedText = await callGeminiApi({
+      generatedText = await callAIApi({
         prompt,
         temperature: 0.3,
         maxOutputTokens: 8192,
       });
-      console.log("[extract-keywords] Gemini API response received, length:", generatedText.length);
+      console.log("[extract-keywords] AI API response received, length:", generatedText.length);
     } catch (apiError) {
-      console.error("[extract-keywords] Gemini API error:", apiError);
+      console.error("[extract-keywords] AI API error:", apiError);
       throw apiError;
     }
 

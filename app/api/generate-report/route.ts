@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { callGeminiApi } from "@/shared/lib/api/client"
+import { callAIApi } from "@/shared/lib/api/client"
 import { handleApiError } from "@/shared/lib/api/error-handler"
 
 export async function POST(request: NextRequest) {
@@ -266,7 +266,7 @@ ${inventionTitle}
 
     console.log("[v0] Making request to API for comprehensive report generation")
 
-    const generatedText = await callGeminiApi({
+    const generatedText = await callAIApi({
       prompt,
       temperature: 0.7,
       topK: 40,
