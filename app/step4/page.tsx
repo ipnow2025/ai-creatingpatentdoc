@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowRight, ArrowLeft, Eye, Trash2, FileText, Calendar, Tag } from "lucide-react"
+import { Loader2, ArrowRight, ArrowLeft, Eye, Trash2, FileText, Calendar, Tag, Download } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -132,6 +132,69 @@ export default function Step4Page() {
   const cleanContent = (content: string) => {
     if (!content) return content
     return content.replace(/\*\*/g, "").replace(/\*/g, "")
+  }
+
+  const handleDownload = (patent: SavedPatentDetail) => {
+    try {
+      // 파일명 생성 (발명의 명칭 + 날짜)
+      const fileName = `${patent.title || "특허명세서"}_${new Date(patent.createdAt).toISOString().split("T")[0]}.txt`
+      
+      // 다운로드할 내용 구성
+      let content = `========================================\n`
+      content += `특허 명세서\n`
+      content += `========================================\n\n`
+      content += `발명의 명칭: ${patent.step1Data.inventionTitle || "없음"}\n`
+      content += `발명자: ${patent.step1Data.inventor || "없음"}\n`
+      content += `출원인: ${patent.step1Data.applicant || "없음"}\n`
+      content += `저장일: ${new Date(patent.createdAt).toLocaleString("ko-KR")}\n\n`
+      
+      content += `========================================\n`
+      content += `선택된 키워드\n`
+      content += `========================================\n`
+      content += `${patent.step2Data.selectedKeywords.join(", ") || "없음"}\n\n`
+      
+      content += `========================================\n`
+      content += `기술 분야\n`
+      content += `========================================\n`
+      content += `${patent.step2Data.selectedTechnicalFields.join(", ") || "없음"}\n\n`
+      
+      if (patent.step2Data.selectedProblems.length > 0) {
+        content += `========================================\n`
+        content += `해결하는 문제점\n`
+        content += `========================================\n`
+        content += `${patent.step2Data.selectedProblems.join(", ")}\n\n`
+      }
+      
+      if (patent.step2Data.selectedFeatures.length > 0) {
+        content += `========================================\n`
+        content += `주요 특징\n`
+        content += `========================================\n`
+        content += `${patent.step2Data.selectedFeatures.join(", ")}\n\n`
+      }
+      
+      // 초안 내용 추가
+      patent.draftVersions.forEach((draft, idx) => {
+        content += `========================================\n`
+        content += `초안 ${draft.version}\n`
+        content += `작성일: ${new Date(draft.timestamp).toLocaleString("ko-KR")}\n`
+        content += `========================================\n\n`
+        content += `${cleanContent(draft.content)}\n\n\n`
+      })
+      
+      // Blob 생성 및 다운로드
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Error downloading:", error)
+      alert("다운로드 중 오류가 발생했습니다.")
+    }
   }
 
   return (
@@ -275,6 +338,28 @@ export default function Step4Page() {
 
                         <div className="flex items-center gap-2">
                           <Button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/patent/saved/${patent.id}`)
+                                const data = await response.json()
+                                if (response.ok) {
+                                  handleDownload(data)
+                                } else {
+                                  alert("다운로드할 데이터를 불러오는 중 오류가 발생했습니다.")
+                                }
+                              } catch (error) {
+                                console.error("Error:", error)
+                                alert("다운로드 중 오류가 발생했습니다.")
+                              }
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-500 text-blue-700 hover:bg-blue-50 font-bold rounded-lg px-4 py-2"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            다운로드
+                          </Button>
+                          <Button
                             onClick={() => handleViewDetail(patent.id)}
                             variant="outline"
                             size="sm"
@@ -325,20 +410,31 @@ export default function Step4Page() {
                     <span>저장일: {new Date(selectedPatent.createdAt).toLocaleString("ko-KR")}</span>
                   </div>
                 </div>
-                <Button
-                  onClick={() => handleDelete(selectedPatent.id)}
-                  variant="outline"
-                  size="sm"
-                  disabled={isDeleting === selectedPatent.id}
-                  className="border-red-500 text-red-700 hover:bg-red-50 font-bold rounded-lg"
-                >
-                  {isDeleting === selectedPatent.id ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 mr-2" />
-                  )}
-                  삭제
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleDownload(selectedPatent)}
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-500 text-blue-700 hover:bg-blue-50 font-bold rounded-lg"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    다운로드
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(selectedPatent.id)}
+                    variant="outline"
+                    size="sm"
+                    disabled={isDeleting === selectedPatent.id}
+                    className="border-red-500 text-red-700 hover:bg-red-50 font-bold rounded-lg"
+                  >
+                    {isDeleting === selectedPatent.id ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    삭제
+                  </Button>
+                </div>
               </div>
 
               <Tabs defaultValue="step1" className="space-y-4">
