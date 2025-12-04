@@ -221,10 +221,9 @@ function Step1Content() {
           <CardContent className="p-6 space-y-5 bg-white">
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-900">
-                발명의 명칭 <span className="text-gray-500 font-normal">(선택사항)</span>
+                발명의 명칭
               </label>
               <Input
-                placeholder="입력하지 않으면 자동으로 생성됩니다"
                 value={inventionTitle}
                 onChange={(e) => setInventionTitle(e.target.value)}
                 className="h-11 text-sm border-2 border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 rounded-xl transition-all"
@@ -234,10 +233,9 @@ function Step1Content() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-900">
-                  발명자 <span className="text-gray-500 font-normal">(선택사항)</span>
+                  발명자
                 </label>
                 <Input
-                  placeholder="입력하지 않으면 비워둡니다"
                   value={inventor}
                   onChange={(e) => setInventor(e.target.value)}
                   className="h-11 text-sm border-2 border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 rounded-xl transition-all"
@@ -245,10 +243,9 @@ function Step1Content() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-900">
-                  출원인 <span className="text-gray-500 font-normal">(선택사항)</span>
+                  출원인
                 </label>
                 <Input
-                  placeholder="입력하지 않으면 비워둡니다"
                   value={applicant}
                   onChange={(e) => setApplicant(e.target.value)}
                   className="h-11 text-sm border-2 border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 rounded-xl transition-all"

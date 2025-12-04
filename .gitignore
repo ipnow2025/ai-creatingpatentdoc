@@ -27,4 +27,5 @@ yarn-error.log*
 next-env.d.ts
 
 # data
-/data
+/data/*
+!/data/saved-patents/
