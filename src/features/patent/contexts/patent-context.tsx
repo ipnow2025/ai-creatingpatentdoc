@@ -78,27 +78,59 @@ export function PatentProvider({ children }: { children: ReactNode }) {
 
   // Helper functions
   const toggleKeyword = useCallback((keyword: string) => {
-    setSelectedKeywords((prev) =>
-      prev.includes(keyword) ? prev.filter((k) => k !== keyword) : [...prev, keyword]
-    )
+    setSelectedKeywords((prev) => {
+      // 이미 선택된 키워드면 제거
+      if (prev.includes(keyword)) {
+        return prev.filter((k) => k !== keyword)
+      }
+      // 최대 5개까지만 선택 가능
+      if (prev.length >= 5) {
+        return prev
+      }
+      return [...prev, keyword]
+    })
   }, [])
 
   const toggleTechnicalField = useCallback((field: string) => {
-    setSelectedTechnicalFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    )
+    setSelectedTechnicalFields((prev) => {
+      // 이미 선택된 분야면 제거
+      if (prev.includes(field)) {
+        return prev.filter((f) => f !== field)
+      }
+      // 최대 2개까지만 선택 가능
+      if (prev.length >= 2) {
+        return prev
+      }
+      return [...prev, field]
+    })
   }, [])
 
   const toggleProblem = useCallback((problem: string) => {
-    setSelectedProblems((prev) =>
-      prev.includes(problem) ? prev.filter((p) => p !== problem) : [...prev, problem]
-    )
+    setSelectedProblems((prev) => {
+      // 이미 선택된 문제점이면 제거
+      if (prev.includes(problem)) {
+        return prev.filter((p) => p !== problem)
+      }
+      // 최대 2개까지만 선택 가능
+      if (prev.length >= 2) {
+        return prev
+      }
+      return [...prev, problem]
+    })
   }, [])
 
   const toggleFeature = useCallback((feature: string) => {
-    setSelectedFeatures((prev) =>
-      prev.includes(feature) ? prev.filter((f) => f !== feature) : [...prev, feature]
-    )
+    setSelectedFeatures((prev) => {
+      // 이미 선택된 특징이면 제거
+      if (prev.includes(feature)) {
+        return prev.filter((f) => f !== feature)
+      }
+      // 최대 2개까지만 선택 가능
+      if (prev.length >= 2) {
+        return prev
+      }
+      return [...prev, feature]
+    })
   }, [])
 
   const togglePatentSelection = useCallback((patentNumber: string) => {

@@ -48,7 +48,7 @@ export default function Step2Page() {
       const searchData = await searchResponse.json()
 
       if (!searchResponse.ok) {
-        alert("특허 검색 중 오류가 발생했습니다.")
+        alert(searchData.error || "특허 검색 중 오류가 발생했습니다.")
         return
       }
 
@@ -152,120 +152,172 @@ export default function Step2Page() {
           <CardContent className="p-6 space-y-5 bg-white max-h-[600px] overflow-y-auto">
             {extractedData.keywords && extractedData.keywords.length > 0 && (
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  핵심 키워드
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
-                  >
-                    {selectedKeywords.length}개 선택
-                  </Badge>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.keywords.map((keyword) => (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    핵심 키워드
                     <Badge
-                      key={keyword}
-                      variant={selectedKeywords.includes(keyword) ? "default" : "secondary"}
-                      className={`cursor-pointer text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm hover:shadow-md ${
-                        selectedKeywords.includes(keyword)
-                          ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                      variant="outline"
+                      className={`text-xs font-bold border-2 rounded-full px-2 py-0.5 ${
+                        selectedKeywords.length >= 5
+                          ? "border-orange-500 text-orange-700"
+                          : "border-teal-500 text-teal-700"
                       }`}
-                      onClick={() => toggleKeyword(keyword)}
                     >
-                      {keyword}
+                      {selectedKeywords.length}/5개 선택
                     </Badge>
-                  ))}
+                  </label>
+                  <span className="text-xs text-gray-500 font-medium">최대 5개까지 선택 가능</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {extractedData.keywords.map((keyword) => {
+                    const isSelected = selectedKeywords.includes(keyword)
+                    const isDisabled = !isSelected && selectedKeywords.length >= 5
+                    return (
+                      <Badge
+                        key={keyword}
+                        variant={isSelected ? "default" : "secondary"}
+                        className={`text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm ${
+                          isSelected
+                            ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white cursor-pointer hover:shadow-md"
+                            : isDisabled
+                            ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed opacity-50"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 cursor-pointer hover:shadow-md"
+                        }`}
+                        onClick={() => !isDisabled && toggleKeyword(keyword)}
+                      >
+                        {keyword}
+                      </Badge>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
             {extractedData.technicalField && extractedData.technicalField.length > 0 && (
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  기술 분야
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
-                  >
-                    {selectedTechnicalFields.length}개 선택
-                  </Badge>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.technicalField.map((field) => (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    기술 분야
                     <Badge
-                      key={field}
-                      variant={selectedTechnicalFields.includes(field) ? "default" : "secondary"}
-                      className={`cursor-pointer text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm hover:shadow-md ${
-                        selectedTechnicalFields.includes(field)
-                          ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                      variant="outline"
+                      className={`text-xs font-bold border-2 rounded-full px-2 py-0.5 ${
+                        selectedTechnicalFields.length >= 2
+                          ? "border-orange-500 text-orange-700"
+                          : "border-teal-500 text-teal-700"
                       }`}
-                      onClick={() => toggleTechnicalField(field)}
                     >
-                      {field}
+                      {selectedTechnicalFields.length}/2개 선택
                     </Badge>
-                  ))}
+                  </label>
+                  <span className="text-xs text-gray-500 font-medium">최대 2개까지 선택 가능</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {extractedData.technicalField.map((field) => {
+                    const isSelected = selectedTechnicalFields.includes(field)
+                    const isDisabled = !isSelected && selectedTechnicalFields.length >= 2
+                    return (
+                      <Badge
+                        key={field}
+                        variant={isSelected ? "default" : "secondary"}
+                        className={`text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm ${
+                          isSelected
+                            ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white cursor-pointer hover:shadow-md"
+                            : isDisabled
+                            ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed opacity-50"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 cursor-pointer hover:shadow-md"
+                        }`}
+                        onClick={() => !isDisabled && toggleTechnicalField(field)}
+                      >
+                        {field}
+                      </Badge>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
             {extractedData.problems && extractedData.problems.length > 0 && (
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  해결하는 문제점
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
-                  >
-                    {selectedProblems.length}개 선택
-                  </Badge>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.problems.map((problem) => (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    해결하는 문제점
                     <Badge
-                      key={problem}
-                      variant={selectedProblems.includes(problem) ? "default" : "secondary"}
-                      className={`cursor-pointer text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm hover:shadow-md ${
-                        selectedProblems.includes(problem)
-                          ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                      variant="outline"
+                      className={`text-xs font-bold border-2 rounded-full px-2 py-0.5 ${
+                        selectedProblems.length >= 2
+                          ? "border-orange-500 text-orange-700"
+                          : "border-teal-500 text-teal-700"
                       }`}
-                      onClick={() => toggleProblem(problem)}
                     >
-                      {problem}
+                      {selectedProblems.length}/2개 선택
                     </Badge>
-                  ))}
+                  </label>
+                  <span className="text-xs text-gray-500 font-medium">최대 2개까지 선택 가능</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {extractedData.problems.map((problem) => {
+                    const isSelected = selectedProblems.includes(problem)
+                    const isDisabled = !isSelected && selectedProblems.length >= 2
+                    return (
+                      <Badge
+                        key={problem}
+                        variant={isSelected ? "default" : "secondary"}
+                        className={`text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm ${
+                          isSelected
+                            ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white cursor-pointer hover:shadow-md"
+                            : isDisabled
+                            ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed opacity-50"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 cursor-pointer hover:shadow-md"
+                        }`}
+                        onClick={() => !isDisabled && toggleProblem(problem)}
+                      >
+                        {problem}
+                      </Badge>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
             {extractedData.features && extractedData.features.length > 0 && (
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  주요 특징
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
-                  >
-                    {selectedFeatures.length}개 선택
-                  </Badge>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.features.map((feature) => (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    주요 특징
                     <Badge
-                      key={feature}
-                      variant={selectedFeatures.includes(feature) ? "default" : "secondary"}
-                      className={`cursor-pointer text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm hover:shadow-md ${
-                        selectedFeatures.includes(feature)
-                          ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                      variant="outline"
+                      className={`text-xs font-bold border-2 rounded-full px-2 py-0.5 ${
+                        selectedFeatures.length >= 2
+                          ? "border-orange-500 text-orange-700"
+                          : "border-teal-500 text-teal-700"
                       }`}
-                      onClick={() => toggleFeature(feature)}
                     >
-                      {feature}
+                      {selectedFeatures.length}/2개 선택
                     </Badge>
-                  ))}
+                  </label>
+                  <span className="text-xs text-gray-500 font-medium">최대 2개까지 선택 가능</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {extractedData.features.map((feature) => {
+                    const isSelected = selectedFeatures.includes(feature)
+                    const isDisabled = !isSelected && selectedFeatures.length >= 2
+                    return (
+                      <Badge
+                        key={feature}
+                        variant={isSelected ? "default" : "secondary"}
+                        className={`text-sm px-4 py-2 transition-all rounded-lg font-bold shadow-sm ${
+                          isSelected
+                            ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white cursor-pointer hover:shadow-md"
+                            : isDisabled
+                            ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed opacity-50"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 cursor-pointer hover:shadow-md"
+                        }`}
+                        onClick={() => !isDisabled && toggleFeature(feature)}
+                      >
+                        {feature}
+                      </Badge>
+                    )
+                  })}
                 </div>
               </div>
             )}

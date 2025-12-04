@@ -33,6 +33,7 @@ export default function Step3Page() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedPatentDetail, setSelectedPatentDetail] = useState<Patent | null>(null)
   const [isPatentModalOpen, setIsPatentModalOpen] = useState(false)
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false)
 
   useEffect(() => {
     if (similarPatents.length === 0) {
@@ -40,10 +41,53 @@ export default function Step3Page() {
     }
   }, [similarPatents, router])
 
-  const handleViewPatentDetail = (patent: Patent, e: React.MouseEvent) => {
+  const handleViewPatentDetail = async (patent: Patent, e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    // 먼저 기본 정보로 모달 열기
     setSelectedPatentDetail(patent)
     setIsPatentModalOpen(true)
+    
+    // 상세 정보가 없거나 요약/상세설명이 없는 경우 API 호출
+    if (!patent.summary && !patent.abstract && patent.rawData) {
+      setIsLoadingDetail(true)
+      try {
+        const idx = patent.rawData.idx
+        // 출원번호로 검색해야 하므로 rawData.apply_number를 우선 사용
+        const applyNumber = patent.rawData?.apply_number || patent.patentNumber
+
+        if (!applyNumber) {
+          console.warn("[step3] No apply_number found in patent data")
+          return
+        }
+
+        const detailResponse = await fetch("/api/patent/detail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idx, applyNumber }),
+        })
+
+        if (detailResponse.ok) {
+          const detailData = await detailResponse.json()
+          if (detailData.patent) {
+            // 기존 정보와 병합 (상세 정보로 업데이트)
+            setSelectedPatentDetail({
+              ...patent,
+              ...detailData.patent,
+              // 기존 정보가 있으면 유지
+              patentNumber: patent.patentNumber || detailData.patent.patentNumber,
+              title: patent.title || detailData.patent.title,
+            })
+          }
+        } else {
+          console.warn("[step3] Failed to fetch patent detail:", await detailResponse.text())
+        }
+      } catch (error) {
+        console.error("[step3] Error fetching patent detail:", error)
+      } finally {
+        setIsLoadingDetail(false)
+      }
+    }
   }
 
   const handleGenerateDraft = async () => {
@@ -216,18 +260,20 @@ export default function Step3Page() {
             </div>
             <p className="text-white/95 text-xs leading-relaxed pl-13">참고할 유사 특허를 선택하세요</p>
           </CardHeader>
-          <CardContent className="p-6 space-y-5 bg-white max-h-[600px] overflow-y-auto">
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-900 flex items-center gap-2 sticky top-0 bg-white pb-2 z-10">
-                유사 특허 목록
-                <Badge
-                  variant="outline"
-                  className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
-                >
-                  {selectedPatents.length}개 선택
-                </Badge>
-              </label>
-              <div className="space-y-4">
+          <CardContent className="p-6 bg-white max-h-[600px] overflow-y-auto">
+            <div className="space-y-4">
+              <div className="sticky top-0 bg-white pb-4 pt-2 z-10 border-b border-gray-100 -mx-6 px-6">
+                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  유사 특허 목록
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-bold border-2 border-teal-500 text-teal-700 rounded-full px-2 py-0.5"
+                  >
+                    {selectedPatents.length}개 선택
+                  </Badge>
+                </label>
+              </div>
+              <div className="space-y-4 pt-2">
                 {similarPatents.map((patent, index) => (
                   <Card
                     key={patent.patentNumber ? `${patent.patentNumber}-${index}` : `patent-${index}`}
@@ -330,8 +376,17 @@ export default function Step3Page() {
             </DialogTitle>
             <DialogDescription className="sr-only">특허 명세서 전체 내용</DialogDescription>
           </DialogHeader>
-          {selectedPatentDetail && (
-            <div className="space-y-10 pt-4">
+          {isLoadingDetail && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-12 w-12 text-teal-500 animate-spin mx-auto" />
+                <p className="text-gray-600 font-medium">상세 정보를 불러오는 중...</p>
+              </div>
+            </div>
+          )}
+          {selectedPatentDetail && !isLoadingDetail && (
+            <div className="space-y-8 pt-4">
+              {/* 헤더 정보 */}
               <div className="flex items-center justify-between pb-6 border-b-2 border-gray-300">
                 <Badge
                   variant="outline"
@@ -342,77 +397,193 @@ export default function Step3Page() {
                 <div className="flex gap-8 text-base">
                   <div>
                     <span className="font-bold text-gray-700">출원인: </span>
-                    <span className="text-gray-900">{selectedPatentDetail.applicant}</span>
+                    <span className="text-gray-900">{selectedPatentDetail.applicant || "-"}</span>
                   </div>
                   <div>
                     <span className="font-bold text-gray-700">출원일: </span>
-                    <span className="text-gray-900">{selectedPatentDetail.applicationDate}</span>
+                    <span className="text-gray-900">{selectedPatentDetail.applicationDate || "-"}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="prose prose-lg max-w-none space-y-8">
-                {/* 기본 정보 */}
-                <div className="grid grid-cols-2 gap-6 pb-6 border-b border-gray-200">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">등록일자</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.registrationDate || "-"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">공고번호</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.publicationNumber || "-"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">공고일자</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.publicationDate || "-"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">지정분류코드</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.classificationCode || "-"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">청구항수</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.claimCount || "-"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-500 mb-2">존속기간만료일자</h3>
-                    <p className="text-base text-gray-900">{selectedPatentDetail.expirationDate || "-"}</p>
-                  </div>
+              {/* 기본 정보 그리드 */}
+              <div className="grid grid-cols-3 gap-6 pb-6 border-b border-gray-200">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">등록일자</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.registrationDate || "-"}</p>
                 </div>
-
-                {/* 영문 발명의 명칭 */}
-                {selectedPatentDetail.englishTitle && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【영문 발명의 명칭】</h2>
-                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.englishTitle}</p>
-                  </div>
-                )}
-
-                {/* 기술분야/요약 */}
-                {selectedPatentDetail.summary && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【기술분야】</h2>
-                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.summary}</p>
-                  </div>
-                )}
-
-                {/* 상세설명 */}
-                {selectedPatentDetail.abstract && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【상세설명】</h2>
-                    <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.abstract}</p>
-                  </div>
-                )}
-
-                {/* 상태 정보 */}
-                {selectedPatentDetail.status && (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">【법적상태】</h2>
-                    <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.status}</p>
-                  </div>
-                )}
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">공고번호</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.publicationNumber || "-"}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">공고일자</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.publicationDate || "-"}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">발명자</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.inventor || "-"}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">청구항수</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.claimCount || (selectedPatentDetail.claimList?.length ? String(selectedPatentDetail.claimList.length) : "-")}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 mb-2">존속기간만료일자</h3>
+                  <p className="text-base text-gray-900">{selectedPatentDetail.expirationDate || "-"}</p>
+                </div>
               </div>
 
+              {/* 분류 정보 */}
+              {((selectedPatentDetail.ipcInfoList?.length ?? 0) > 0 || (selectedPatentDetail.cpcInfoList?.length ?? 0) > 0 || selectedPatentDetail.classificationCode) && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【분류 정보】</h2>
+                  <div className="space-y-3">
+                    {selectedPatentDetail.ipcInfoList && selectedPatentDetail.ipcInfoList.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-600 mb-2">IPC 분류</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedPatentDetail.ipcInfoList.map((ipc: any, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs border-teal-500 text-teal-700">
+                              {ipc.code || ipc.ipc || ipc}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedPatentDetail.cpcInfoList && selectedPatentDetail.cpcInfoList.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-600 mb-2">CPC 분류</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedPatentDetail.cpcInfoList.map((cpc: any, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs border-blue-500 text-blue-700">
+                              {cpc.code || cpc.cpc || cpc}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedPatentDetail.classificationCode && (
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-600 mb-2">지정분류코드</h3>
+                        <p className="text-base text-gray-900">{selectedPatentDetail.classificationCode}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 영문 발명의 명칭 */}
+              {selectedPatentDetail.englishTitle && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【영문 발명의 명칭】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base">{selectedPatentDetail.englishTitle}</p>
+                </div>
+              )}
+
+              {/* 기술분야 */}
+              {selectedPatentDetail.technialField && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【기술분야】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.technialField}</p>
+                </div>
+              )}
+
+              {/* 배경기술 */}
+              {selectedPatentDetail.backgroundArt && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【배경기술】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.backgroundArt}</p>
+                </div>
+              )}
+
+              {/* 기술적 과제 */}
+              {selectedPatentDetail.techProblem && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【기술적 과제】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.techProblem}</p>
+                </div>
+              )}
+
+              {/* 기술적 해결수단 */}
+              {selectedPatentDetail.techSolution && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【기술적 해결수단】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.techSolution}</p>
+                </div>
+              )}
+
+              {/* 유리한 효과 */}
+              {selectedPatentDetail.advantageousEffects && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【유리한 효과】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.advantageousEffects}</p>
+                </div>
+              )}
+
+              {/* 도면의 간단한 설명 */}
+              {selectedPatentDetail.descriptionOfDrawings && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【도면의 간단한 설명】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.descriptionOfDrawings}</p>
+                </div>
+              )}
+
+              {/* 특허 패밀리 */}
+              {selectedPatentDetail.familyList && selectedPatentDetail.familyList.length > 0 && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【특허 패밀리】</h2>
+                  <div className="space-y-2">
+                    {selectedPatentDetail.familyList.map((family: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm font-semibold text-gray-700 min-w-[100px]">
+                          {family.country || family.nation || ""}
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {family.patentNumber || family.number || family.apply_number || ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 요약 (백업용) */}
+              {selectedPatentDetail.summary && !selectedPatentDetail.technialField && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【요약】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.summary}</p>
+                </div>
+              )}
+
+              {/* 상세설명 (백업용) */}
+              {selectedPatentDetail.abstract && !selectedPatentDetail.descriptionOfEmbodiments && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【상세설명】</h2>
+                  <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap">{selectedPatentDetail.abstract}</p>
+                </div>
+              )}
+
+              {/* 청구항 */}
+              {selectedPatentDetail.claimList && selectedPatentDetail.claimList.length > 0 && (
+                <div className="pb-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">【청구항】</h2>
+                  <div className="space-y-4">
+                    {selectedPatentDetail.claimList.map((claim: any, idx: number) => (
+                      <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <span className="font-bold text-teal-600 min-w-[40px]">{idx + 1}항</span>
+                          <p className="text-gray-800 leading-relaxed text-base flex-1 whitespace-pre-wrap">
+                            {typeof claim === 'string' ? claim : (claim.text || claim.content || claim.claim || JSON.stringify(claim))}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 선택 체크박스 */}
               <div className="pt-8 border-t-2 border-gray-300 sticky bottom-0 bg-white">
                 <div className="flex items-center gap-4 p-5 bg-teal-50 rounded-xl">
                   <Checkbox
